@@ -56,3 +56,19 @@ None.
 - Warns on duplicate top-level list names.
 - Warns when a top-level list name matches an HTML `id` attribute.
 - Warns if square blocks span multiple lines.
+
+Do a deep analysis of these two pages:
+[Perchance Tutorial](https://perchance.org/tutorial) and [Perchance Advanced Tutorial](https://perchance.org/advanced-tutorial).
+
+Based on that, perform comprehensive research on how to improve my Perchance VS Code extension so that it:
+
+- Follows best practices for Perchance.org
+- Provides full `*.perchance` and `*.prch` language support in Visual Studio Code
+
+The extension should support:
+
+- **Coding assistance:** linting, formatting, fixing all auto-fixable problems
+- **Perchance-specific features:** validation, grammar checks, snippets, code generation
+- **Editor integration:** quick suggestions, AI-powered code actions, proper indentation
+- **Language features:** syntax highlighting, syntax support, auto-completion, hover support
+- **Configuration:** a wide range of extension settings for customization
