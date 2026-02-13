@@ -1,0 +1,13 @@
+**/.git/**
+**/node_modules/**
+**/src/**
+**/*.ts
+**/*.map
+**/tsconfig*.json
+**/tsconfig.tsbuildinfo
+**/scripts/**
+**/tmp/**
+**/.github/**
+**/.moss/**
+**/legacy/**
+../**

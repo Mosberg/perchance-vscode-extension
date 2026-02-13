@@ -14,19 +14,10 @@
   "categories": [
     "Programming Languages"
   ],
-  "main": "./out/server.js",
-  "files": [
-    "out/**",
-    "server/**",
-    "data/**",
-    "snippets/**",
-    "syntaxes/**",
-    "language-configuration.json",
-    "README.md",
-    "LICENSE.txt",
-    "package.json",
-    "node_modules/**"
+  "activationEvents": [
+    "onStartupFinished"
   ],
+  "main": "./out/extension.js",
   "private": true,
   "dependencies": {
     "vscode-languageserver": "^9.0.1",
