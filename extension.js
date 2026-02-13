@@ -306,20 +306,6 @@ function registerCodeActions(context) {
           }
         }
 
-        if (diagnostic.code === "perchance.unescapedEquals") {
-          const fix = createEscapeEqualsFix(document, diagnostic);
-          if (fix) {
-            actions.push(fix);
-          }
-        }
-
-        if (diagnostic.code === "perchance.squareBlockMultiline") {
-          const fix = createSquareBlockJoinFix(document, diagnostic);
-          if (fix) {
-            actions.push(fix);
-          }
-        }
-
         if (diagnostic.code === "perchance.duplicateListName") {
           const fix = createRenameListFix(document, diagnostic, "_2");
           if (fix) {
@@ -461,7 +447,6 @@ function analyzeDocument(document) {
   const listNameIndex = new Map();
   const listNames = [];
   const htmlIds = new Set();
-  const squareBlockWarnings = new Set();
   let functionIndentLevel = null;
 
   for (let index = htmlStart; index < lines.length; index += 1) {
@@ -541,53 +526,6 @@ function analyzeDocument(document) {
     }
 
     const skipPerchanceBlocks = functionIndentLevel !== null && indentLevel > functionIndentLevel;
-
-    if (!skipPerchanceBlocks && hasNestedSquareBrackets(commentFree)) {
-      diagnostics.push(
-        createDiagnostic(
-          index,
-          indent.length,
-          indent.length + commentFree.length,
-          "Avoid wrapping variable names in square brackets inside square blocks."
-        )
-      );
-    }
-
-    if (
-      !skipPerchanceBlocks &&
-      hasUnclosedSquareBlock(commentFree) &&
-      !squareBlockWarnings.has(index)
-    ) {
-      squareBlockWarnings.add(index);
-      diagnostics.push(
-        createDiagnostic(
-          index,
-          indent.length,
-          indent.length + commentFree.length,
-          "Square blocks cannot span multiple lines.",
-          "perchance.squareBlockMultiline",
-          { line: index }
-        )
-      );
-    }
-
-    if (
-      !skipPerchanceBlocks &&
-      indent.length > 0 &&
-      !isPropertyAssignment(commentFree) &&
-      hasUnescapedEqualsOutsideSquareBlocks(commentFree)
-    ) {
-      diagnostics.push(
-        createDiagnostic(
-          index,
-          indent.length,
-          indent.length + commentFree.length,
-          "Use = for literal equals signs in list items.",
-          "perchance.unescapedEquals",
-          { line: index }
-        )
-      );
-    }
 
     if (!skipPerchanceBlocks) {
       const oddsWarnings = findDynamicOddsWithSingleEquals(commentFree);
@@ -698,7 +636,11 @@ function findHtmlStart(lines) {
 
 /** @param {string} trimmedLine */
 function parseListName(trimmedLine) {
-  const match = trimmedLine.match(/^[A-Za-z0-9_$][\w$-]*/);
+  let line = trimmedLine;
+  if (line.startsWith("async ")) {
+    line = line.slice("async ".length).trimStart();
+  }
+  const match = line.match(/^[A-Za-z0-9_$][\w$-]*/);
   if (!match) {
     return null;
   }
@@ -714,80 +656,8 @@ function isFunctionListStart(trimmedLine) {
 }
 
 /** @param {string} text */
-function hasNestedSquareBrackets(text) {
-  const pattern = /\[[^\]]*\[[a-zA-Z_$][\w$]*(?:\.[\w$]+)*\][^\]]*\]/;
-  return pattern.test(text);
-}
-
-/** @param {string} text */
-function hasUnclosedSquareBlock(text) {
-  let depth = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (char === "\\") {
-      i += 1;
-      continue;
-    }
-    if (char === "[") {
-      depth += 1;
-    } else if (char === "]" && depth > 0) {
-      depth -= 1;
-    }
-  }
-  return depth > 0;
-}
-
-/** @param {string} text */
 function isPropertyAssignment(text) {
   return /^[a-zA-Z0-9_$][\w$]*\s*=/.test(text.trimStart());
-}
-
-/** @param {string} text */
-function hasUnescapedEqualsOutsideSquareBlocks(text) {
-  const filtered = removeSquareBlocks(text);
-  for (let i = 0; i < filtered.length; i += 1) {
-    if (filtered[i] !== "=") {
-      continue;
-    }
-
-    const prev = filtered[i - 1] || "";
-    const next = filtered[i + 1] || "";
-    if (prev === "\\") {
-      continue;
-    }
-    if (prev === "=" || next === "=") {
-      continue;
-    }
-    if (prev === "!" || prev === ">" || prev === "<") {
-      continue;
-    }
-    if (next === ">") {
-      continue;
-    }
-    return true;
-  }
-  return false;
-}
-
-/** @param {string} text */
-function removeSquareBlocks(text) {
-  let result = "";
-  let depth = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (char === "[" && (i === 0 || text[i - 1] !== "\\")) {
-      depth += 1;
-      continue;
-    }
-    if (char === "]" && depth > 0) {
-      depth -= 1;
-      continue;
-    }
-    if (depth === 0) {
-      result += char;
-    }
-  }
-  return result;
 }
 
 /** @param {string} text */
@@ -924,37 +794,6 @@ function replaceFirstSingleEquals(text, replacement) {
 /**
  * @param {vscode.TextDocument} document
  * @param {vscode.Diagnostic & { data?: DiagnosticData }} diagnostic
- */
-function createSquareBlockJoinFix(document, diagnostic) {
-  const line = diagnostic.data?.line ?? diagnostic.range.start.line;
-  if (line + 1 >= document.lineCount) {
-    return null;
-  }
-
-  const currentLine = document.lineAt(line);
-  const nextLine = document.lineAt(line + 1);
-  const replaceRange = new vscode.Range(
-    line,
-    currentLine.text.length,
-    line + 1,
-    nextLine.firstNonWhitespaceCharacterIndex
-  );
-
-  const edit = new vscode.WorkspaceEdit();
-  edit.replace(document.uri, replaceRange, " ");
-
-  const fix = new vscode.CodeAction(
-    "Join line to keep square block on one line",
-    vscode.CodeActionKind.QuickFix
-  );
-  fix.edit = edit;
-  fix.diagnostics = [diagnostic];
-  return fix;
-}
-
-/**
- * @param {vscode.TextDocument} document
- * @param {vscode.Diagnostic & { data?: DiagnosticData }} diagnostic
  * @param {string} suffix
  */
 function createRenameListFix(document, diagnostic, suffix) {
@@ -978,69 +817,6 @@ function createRenameListFix(document, diagnostic, suffix) {
   fix.edit = edit;
   fix.diagnostics = [diagnostic];
   return fix;
-}
-
-/**
- * @param {vscode.TextDocument} document
- * @param {vscode.Diagnostic & { data?: DiagnosticData }} diagnostic
- */
-function createEscapeEqualsFix(document, diagnostic) {
-  const line = diagnostic.data?.line ?? diagnostic.range.start.line;
-  const lineText = document.lineAt(line).text;
-  const updated = escapeFirstEqualsOutsideSquareBlocks(lineText);
-  if (!updated || updated === lineText) {
-    return null;
-  }
-
-  const edit = new vscode.WorkspaceEdit();
-  edit.replace(document.uri, new vscode.Range(line, 0, line, lineText.length), updated);
-
-  const fix = new vscode.CodeAction("Escape = as \\\u003d", vscode.CodeActionKind.QuickFix);
-  fix.edit = edit;
-  fix.diagnostics = [diagnostic];
-  return fix;
-}
-
-/** @param {string} text */
-function escapeFirstEqualsOutsideSquareBlocks(text) {
-  let depth = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (char === "\\") {
-      i += 1;
-      continue;
-    }
-    if (char === "[" && depth >= 0) {
-      depth += 1;
-      continue;
-    }
-    if (char === "]" && depth > 0) {
-      depth -= 1;
-      continue;
-    }
-    if (depth > 0) {
-      continue;
-    }
-    if (char !== "=") {
-      continue;
-    }
-
-    const prev = text[i - 1] || "";
-    const next = text[i + 1] || "";
-    if (prev === "=" || next === "=") {
-      continue;
-    }
-    if (prev === "!" || prev === ">" || prev === "<") {
-      continue;
-    }
-    if (next === ">") {
-      continue;
-    }
-
-    return `${text.slice(0, i)}\\=${text.slice(i + 1)}`;
-  }
-
-  return null;
 }
 
 /** @param {vscode.ExtensionContext} context */
