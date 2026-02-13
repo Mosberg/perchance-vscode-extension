@@ -1,0 +1,14 @@
+main
+  [age = 10 ? "young" : "old"]
+  This line has an unescaped = sign
+
+main
+  Duplicate list name
+
+htmlId
+  [missing
+  bracket]
+
+<main>
+  <p id="htmlId">[main]</p>
+</main>
