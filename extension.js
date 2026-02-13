@@ -462,7 +462,7 @@ function analyzeDocument(document) {
   const listNames = [];
   const htmlIds = new Set();
   const squareBlockWarnings = new Set();
-  let currentListIsFunction = false;
+  let functionIndentLevel = null;
 
   for (let index = htmlStart; index < lines.length; index += 1) {
     const line = lines[index];
@@ -487,9 +487,17 @@ function analyzeDocument(document) {
 
     const indentMatch = line.match(/^[\t ]+/);
     const indent = indentMatch ? indentMatch[0] : "";
+    const indentLevel = countIndentLevel(indent);
     const content = line.slice(indent.length);
     const commentFree = stripComment(content);
     const commentFreeTrimmed = commentFree.trim();
+
+    if (trimmed && functionIndentLevel !== null && indentLevel <= functionIndentLevel) {
+      functionIndentLevel = null;
+    }
+    if (isFunctionListStart(commentFreeTrimmed)) {
+      functionIndentLevel = indentLevel;
+    }
 
     if (!indent && trimmed) {
       const listName = parseListName(commentFreeTrimmed);
@@ -510,8 +518,6 @@ function analyzeDocument(document) {
           listNames.push({ name: listName, line: index });
         }
       }
-
-      currentListIsFunction = isFunctionListStart(commentFreeTrimmed);
     }
 
     if (indent.includes("\t") && indent.includes(" ")) {
@@ -534,7 +540,7 @@ function analyzeDocument(document) {
       }
     }
 
-    const skipPerchanceBlocks = currentListIsFunction && indent.length > 0;
+    const skipPerchanceBlocks = functionIndentLevel !== null && indentLevel > functionIndentLevel;
 
     if (!skipPerchanceBlocks && hasNestedSquareBrackets(commentFree)) {
       diagnostics.push(
