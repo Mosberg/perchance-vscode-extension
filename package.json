@@ -1,6 +1,13 @@
 {
   "name": "perchance-vscode-extension",
+  "version": "0.1.0",
   "publisher": "Mosberg",
+  "repository": {
+    "url": "https://github.com/Mosberg/perchance-vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.22.0"
+  },
   "private": true,
   "workspaces": [
     "client",
