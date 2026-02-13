@@ -57,18 +57,107 @@ None.
 - Warns when a top-level list name matches an HTML `id` attribute.
 - Warns if square blocks span multiple lines.
 
-Do a deep analysis of these two pages:
-[Perchance Tutorial](https://perchance.org/tutorial) and [Perchance Advanced Tutorial](https://perchance.org/advanced-tutorial).
+## Copilot Guidance
 
-Based on that, perform comprehensive research on how to improve my Perchance VS Code extension so that it:
+This repo includes targeted guidance for VS Code Copilot to keep Perchance answers accurate, minimal, and linked to official examples.
+See [ .github/copilot-instructions.md ](.github/copilot-instructions.md) for the behavior rules and index usage.
 
-- Follows best practices for Perchance.org
-- Provides full `*.perchance` and `*.prch` language support in Visual Studio Code
+## Quick Reference (Query -> Link)
 
-The extension should support:
+- Dice example -> https://perchance.org/selectmany-sumitems-example
+- Consumable list -> https://perchance.org/consumable-list-with-dynamic-odds-example#edit
+- Random image -> https://perchance.org/simple-random-images-example#edit
+- Tap randomize -> https://perchance.org/tap-image-to-randomize#edit
+- Hide output -> https://perchance.org/hide-output-until-click-example#edit
+- Seed from URL -> https://perchance.org/seed-from-url-example#edit
 
-- **Coding assistance:** linting, formatting, fixing all auto-fixable problems
-- **Perchance-specific features:** validation, grammar checks, snippets, code generation
-- **Editor integration:** quick suggestions, AI-powered code actions, proper indentation
-- **Language features:** syntax highlighting, syntax support, auto-completion, hover support
-- **Configuration:** a wide range of extension settings for customization
+Respect privacy: all AI features should be clearly marked and toggleable in settings, with a configurable endpoint.
+
+---
+
+## 6. Completions, snippets, and hover support
+
+Leverage the method and block catalog heavily here. [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+
+- **Completions**
+  - Block names wherever an identifier is expected inside `[...]`.
+  - Child names when `list.getChildNames()` or hierarchical references are used. [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+  - Methods with signature hints and short descriptions from the community docs (`consumableList`, `createClone`, `selectAll`, `evaluateItem`, etc.). [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+  - Common dice patterns like `Dice 3d6` in brackets, as seen in tutorial-style examples. [youtube](https://www.youtube.com/watch?v=2DRSuHDPU6I)
+
+- **Snippets**
+  - “Basic generator” snippet with `output` and a sample list block.
+  - “Hierarchical list” snippet following typical structure from examples. [youtube](https://www.youtube.com/watch?v=2DRSuHDPU6I)
+  - “Method usage” snippet for each common method (e.g. `selectMany` + `joinItems`, `pastTense`/`pluralForm` transformations). [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+  - HTML utility snippets (`<br>`, `<b>`, etc.) used inside outputs. [youtube](https://www.youtube.com/watch?v=2DRSuHDPU6I)
+
+- **Hover tooltips**
+  - On block names: show where the block is defined, list length (using `getLength` semantics), and a truncated preview of items. [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+  - On methods: show a short definition, argument list, simple example, and edge-case warnings (e.g. `consumableList` gets depleted). [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+  - On inline variables (`x` in `[x = noun.selectOne]`), show inferred “type” (text, list element, etc.) and where it is assigned. [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+
+Hovers are a low-friction way to embed Perchance best practices right in the editor.
+
+---
+
+## 7. Configuration surface
+
+Given your preference for schema-driven workflows, define a JSON schema for your extension configuration and then expose that in `package.json` so users get auto-completion in `settings.json`.
+
+Potential settings:
+
+- **Language / parsing**
+  - `perchance.language.strictMode` (enable stricter semantics and style linting).
+  - `perchance.language.tabSize` / `insertSpaces`.
+  - `perchance.language.maxListPreviewItems` (affects hovers).
+
+- **Diagnostics**
+  - `perchance.lints.enabledRules` and `perchance.lints.ruleSeverity.<ruleId>`.
+  - Flags for “experimental” rules that codify evolving community best practices.
+
+- **Formatting**
+  - `perchance.format.enable`.
+  - `perchance.format.wrapColumn`.
+  - `perchance.format.inlineExpressionSpacing`.
+
+- **AI & networking**
+  - `perchance.ai.enable`.
+  - `perchance.ai.endpoint`, `perchance.ai.apiKeySettingId`.
+  - `perchance.ai.safetyLevel` for output filtering.
+
+- **Snippets / completions**
+  - `perchance.suggestions.methods.enable`.
+  - `perchance.suggestions.htmlTags.enable`.
+  - `perchance.suggestions.snippets.scope` (basic vs advanced set, where advanced includes method-heavy patterns from the methods list). [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+
+---
+
+## 8. Testing and validation strategy
+
+For a language-oriented extension, a strong test suite pays off quickly:
+
+- **Corpus-based tests**
+  - Collect a set of public Perchance generators and tutorial examples (or synthetic ones using methods list). [youtube](https://www.youtube.com/watch?v=2DRSuHDPU6I)
+  - Ensure “no false positive errors” when parsing known-good code.
+  - Add fixtures that intentionally violate rules to test each diagnostic and quick fix.
+
+- **Golden-format tests**
+  - Given an input Perchance file, assert that formatting output matches a golden file.
+  - Include variations using different indentation settings.
+
+- **LSP integration tests**
+  - Exercise completion, hover, code actions against sample documents to ensure stable behavior as your parser evolves.
+
+---
+
+## 9. Alignment with Perchance.org best practices
+
+While the official tutorials you linked export a lot of UI scaffolding HTML rather than clean language docs, you can still align with platform behavior and culture by:
+
+- Encouraging **hierarchical lists** and **methods** for composition instead of huge flat lists, mirroring how advanced examples use functions like `selectMany`, `joinItems`, and tense/number transformations. [youtube](https://www.youtube.com/watch?v=2DRSuHDPU6I)
+- Surfacing warnings that would help users avoid runtime surprises, such as how `consumableList` depletes over time or how `evaluateItem` may change evaluation order. [perchance.fandom](https://perchance.fandom.com/wiki/Perchance_Methods)
+- Reflecting Perchance’s emphasis on “playful, forgiving” scripting: provide helpful messages, not just raw errors; word diagnostics in a friendly tone similar to Perchance’s own UI text. [youtube](https://www.youtube.com/watch?v=fCaEGQVonGE)
+
+This keeps your extension feeling native to the ecosystem rather than a generic syntax highlighter.
+
+---\*\*\*---
