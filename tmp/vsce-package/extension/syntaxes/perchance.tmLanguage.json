@@ -1,0 +1,39 @@
+{
+  "scopeName": "source.perchance",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#blockName" },
+    { "include": "#inlineExpr" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.perchance", "match": "//.*$" },
+        { "name": "comment.block.perchance", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "blockName": {
+      "patterns": [
+        {
+          "name": "entity.name.section.perchance",
+          "match": "^\\s*([A-Za-z_][\\w-]*)\\s*(?==)"
+        }
+      ]
+    },
+    "inlineExpr": {
+      "patterns": [
+        {
+          "name": "meta.brackets.square.perchance",
+          "begin": "\\[",
+          "end": "\\]",
+          "patterns": [
+            {
+              "name": "entity.name.function.perchance",
+              "match": "\\b[A-Za-z_][\\w-]*\\b"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

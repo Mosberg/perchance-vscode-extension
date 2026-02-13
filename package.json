@@ -20,6 +20,7 @@
     "lint:full": "npm run lint:full -w client && npm run lint:full -w server",
     "data:check": "node scripts/validate-data.js",
     "data:sort": "node scripts/sort-data.js",
-    "test": "npm test -w client"
+    "test": "npm test -w client",
+    "package:vsix": "node scripts/package-vsce.js"
   }
 }
