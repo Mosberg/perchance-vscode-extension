@@ -39,6 +39,12 @@
 [AI Image Generator Moss](https://perchance.org/ai-text-to-image-generator-moss)
 [AI Image Generator Moss Edit](https://perchance.org/ai-text-to-image-generator-moss#edit)
 
+[AI Character Generator Moss](https://perchance.org/ai-character-generator-moss)
+[AI Character Generator Moss Edit](https://perchance.org/ai-character-generator-moss#edit)
+
+[AI Pokemon Generator Moss](https://perchance.org/ai-pokemon-generator-moss)
+[AI Pokemon Generator Moss Edit](https://perchance.org/ai-pokemon-generator-moss#edit)
+
 [AI Chat Moss](https://perchance.org/ai-chat-moss)
 [AI Chat Moss Edit](https://perchance.org/ai-chat-moss#edit)
 

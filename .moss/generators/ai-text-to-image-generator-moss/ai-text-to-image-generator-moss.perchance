@@ -1,4 +1,4 @@
-generateInterfaceHTML = {import:t2i-framework-plugin-v2}  // <-- This is a 'framework' plugin that itself imports the text-to-image plugin and generates the user interface using the settings below.
+generateHTML = {import:t2i-framework-plugin-v2}  // <-- This is a 'framework' plugin that itself imports the text-to-image plugin and generates the user interface using the settings below.
 
 
 // Feel free to edit the settings below and then save your own copy of this generator!
