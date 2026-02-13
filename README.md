@@ -2,15 +2,17 @@
 
 Perchance language support plus a command to help choose and insert plugin snippets.
 
+This repository is a monorepo with a VS Code client extension and a language server.
+
 ## Features
 
 - Perchance language registration with comment and bracket support.
 - Formatter and diagnostics for common Perchance pitfalls.
 - Snippets for lists, imports, preprocessors, and $meta.
 - Commands: `Perchance: Manage Plugins`, `Perchance: Create Generator`, `Perchance: Toggle Wrap`, `Perchance: Fold All Lists`, `Perchance: Unfold All Lists`.
-- Plugin catalog loaded from [data/plugins.json](data/plugins.json).
-- Generator templates loaded from [data/templates.json](data/templates.json).
-- Template generator links loaded from [data/template_generators.json](data/template_generators.json).
+- Plugin catalog loaded from [client/data/plugins.json](client/data/plugins.json).
+- Generator templates loaded from [client/data/templates.json](client/data/templates.json).
+- Template generator links loaded from [client/data/template_generators.json](client/data/template_generators.json).
 
 ## Usage
 
@@ -39,16 +41,22 @@ None.
 
 ## Known Issues
 
-- The plugin list is not synced automatically. Keep [data/plugins.json](data/plugins.json) up to date.
-- Template generator links are static. Update [data/template_generators.json](data/template_generators.json) to keep them current.
+- The plugin list is not synced automatically. Keep [client/data/plugins.json](client/data/plugins.json) up to date.
+- Template generator links are static. Update [client/data/template_generators.json](client/data/template_generators.json) to keep them current.
+
+## Monorepo Layout
+
+- Client extension: [client](client)
+- Language server: [server](server)
+- Root data tools: [scripts](scripts)
 
 ## Development
 
-- `npm run lint` to run ESLint.
-- `npm run lint:full` to lint all JavaScript files with a higher heap limit.
+- `npm run build` to compile client and server.
+- `npm run lint` to run ESLint for client and server.
 - `npm run data:check` to validate data file schemas.
 - `npm run data:sort` to sort data files by label/id.
-- `npm test` to run extension tests.
+- `npm test` to run extension tests (client placeholder).
 
 ## Diagnostics Notes
 
@@ -64,12 +72,37 @@ See [ .github/copilot-instructions.md ](.github/copilot-instructions.md) for the
 
 ## Quick Reference (Query -> Link)
 
+Core
+
+- Tutorial -> https://perchance.org/tutorial
+- Advanced tutorial -> https://perchance.org/advanced-tutorial
+- Examples hub -> https://perchance.org/examples
+- Plugins index -> https://perchance.org/plugins
+- Templates -> https://perchance.org/templates
+
+Lists & Mechanics
+
 - Dice example -> https://perchance.org/selectmany-sumitems-example
 - Consumable list -> https://perchance.org/consumable-list-with-dynamic-odds-example#edit
-- Random image -> https://perchance.org/simple-random-images-example#edit
-- Tap randomize -> https://perchance.org/tap-image-to-randomize#edit
+- Persistent list -> https://perchance.org/persistent-consumable-list-example#edit
+- Dynamic odds if/else -> https://perchance.org/if-else-in-dynamic-odds-example#edit
+- Filter list item -> https://perchance.org/filter-exclude-item-from-list#edit
+
+UI & State
+
 - Hide output -> https://perchance.org/hide-output-until-click-example#edit
-- Seed from URL -> https://perchance.org/seed-from-url-example#edit
+- Click counter -> https://perchance.org/click-counter#edit
+- Output history -> https://perchance.org/output-history-example#edit
+- Remember user inputs -> https://perchance.org/remember-user-inputs-basic-example#edit
+- Tap randomize -> https://perchance.org/tap-image-to-randomize#edit
+
+Visuals
+
+- Random image -> https://perchance.org/simple-random-images-example#edit
+- Random image cropped -> https://perchance.org/simple-random-image-example-cropped#edit
+- Colored text -> https://perchance.org/generate-colored-text-example#edit
+- Custom cursor -> https://perchance.org/custom-cursor-example#edit
+- Bingo table -> https://perchance.org/bingo-table-example#edit
 
 Respect privacy: all AI features should be clearly marked and toggleable in settings, with a configurable endpoint.
 

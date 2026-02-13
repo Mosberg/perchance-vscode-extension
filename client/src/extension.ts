@@ -1,85 +1,66 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-const vscode = require("vscode");
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
+import * as vscode from "vscode";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind
+} from "vscode-languageclient/node";
 
 const PLUGINS_FILE = "data/plugins.json";
 const TEMPLATES_FILE = "data/templates.json";
 const TEMPLATE_GENERATORS_FILE = "data/template_generators.json";
 
-/**
- * @typedef {Object} PluginRecord
- * @property {string} [label]
- * @property {string} [description]
- * @property {string} [detail]
- * @property {string} [snippet]
- * @property {string} [url]
- */
+interface PluginRecord {
+  label?: string;
+  description?: string;
+  detail?: string;
+  snippet?: string;
+  url?: string;
+}
 
-/**
- * @typedef {Object} TemplateRecord
- * @property {string} [id]
- * @property {string} label
- * @property {string} [description]
- * @property {string} [content]
- */
+interface TemplateRecord {
+  id?: string;
+  label: string;
+  description?: string;
+  content?: string;
+}
 
-/**
- * @typedef {Object} TemplateGeneratorRecord
- * @property {string} label
- * @property {string} [description]
- * @property {string} url
- * @property {string} [edit_url]
- */
+interface TemplateGeneratorRecord {
+  label: string;
+  description?: string;
+  url: string;
+  edit_url?: string;
+}
 
-/**
- * @typedef {Object} PluginPickItem
- * @property {string} label
- * @property {string} [description]
- * @property {string} [detail]
- * @property {PluginRecord} plugin
- */
+interface PluginPickItem extends vscode.QuickPickItem {
+  plugin: PluginRecord;
+}
 
-/**
- * @typedef {Object} TemplatePickItem
- * @property {string} label
- * @property {string} [description]
- * @property {TemplateRecord} template
- */
+interface TemplatePickItem extends vscode.QuickPickItem {
+  template: TemplateRecord;
+}
 
-/**
- * @typedef {Object} TemplateGeneratorPickItem
- * @property {string} label
- * @property {string} [description]
- * @property {"template"} action
- * @property {TemplateGeneratorRecord} template
- */
+interface TemplateGeneratorPickItem extends vscode.QuickPickItem {
+  action: "template";
+  template: TemplateGeneratorRecord;
+}
 
-/**
- * @typedef {Object} DownloadPickItem
- * @property {string} label
- * @property {string} [description]
- * @property {"download"} action
- */
+interface DownloadPickItem extends vscode.QuickPickItem {
+  action: "download";
+}
 
-/**
- * @typedef {TemplatePickItem | TemplateGeneratorPickItem | DownloadPickItem} GeneratorPickItem
- */
+type GeneratorPickItem = TemplatePickItem | TemplateGeneratorPickItem | DownloadPickItem;
 
-/**
- * @typedef {Object} DiagnosticData
- * @property {number} [line]
- * @property {string} [name]
- */
+type DiagnosticData = {
+  line?: number;
+  name?: string;
+};
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let client: LanguageClient | undefined;
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
+export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection("perchance");
   context.subscriptions.push(diagnostics);
 
@@ -94,15 +75,39 @@ function activate(context) {
       diagnostics.set(document.uri, analyzeDocument(document));
     }
   });
+
+  const serverModule = context.asAbsolutePath(path.join("..", "server", "out", "server.js"));
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: { execArgv: ["--nolazy", "--inspect=6009"] }
+    }
+  };
+
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [{ scheme: "file", language: "perchance" }],
+    synchronize: {
+      configurationSection: "perchance",
+      fileEvents: [
+        vscode.workspace.createFileSystemWatcher("**/*.perchance"),
+        vscode.workspace.createFileSystemWatcher("**/*.prch")
+      ]
+    }
+  };
+
+  client = new LanguageClient("perchance", "Perchance LSP", serverOptions, clientOptions);
+  context.subscriptions.push(client.start());
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function registerCommands(context) {
+export function deactivate(): Thenable<void> | undefined {
+  return client ? client.stop() : undefined;
+}
+
+function registerCommands(context: vscode.ExtensionContext): void {
   const managePluginsId = "perchance-for-vscode.managePlugins";
-  const managePlugins = vscode.commands.registerCommand(managePluginsId, async function () {
-    /** @type {PluginRecord[]} */
+  const managePlugins = vscode.commands.registerCommand(managePluginsId, async () => {
     const plugins = loadPlugins(context);
     if (!plugins.length) {
       const choice = await vscode.window.showWarningMessage(
@@ -115,8 +120,7 @@ function registerCommands(context) {
       return;
     }
 
-    /** @type {PluginPickItem[]} */
-    const items = plugins.map((plugin) => ({
+    const items: PluginPickItem[] = plugins.map((plugin) => ({
       label: plugin.label || plugin.url || "Plugin",
       description: plugin.description || plugin.url || "",
       detail: plugin.detail || "",
@@ -160,27 +164,24 @@ function registerCommands(context) {
   });
 
   const createGeneratorId = "perchance-for-vscode.createGenerator";
-  const createGenerator = vscode.commands.registerCommand(createGeneratorId, async function () {
-    /** @type {TemplateRecord[]} */
+  const createGenerator = vscode.commands.registerCommand(createGeneratorId, async () => {
     const templates = loadTemplates(context);
-    /** @type {TemplateGeneratorRecord[]} */
     const templateGenerators = loadTemplateGenerators(context);
-    /** @type {TemplatePickItem[]} */
-    const templateItems = templates.map((template) => ({
+    const templateItems: TemplatePickItem[] = templates.map((template) => ({
       label: template.label,
       description: template.description || "",
       template
     }));
-    /** @type {TemplateGeneratorPickItem[]} */
-    const templateGeneratorItems = templateGenerators.map((template) => ({
-      label: template.label,
-      description: template.description || "",
-      action: "template",
-      template
-    }));
+    const templateGeneratorItems: TemplateGeneratorPickItem[] = templateGenerators.map(
+      (template) => ({
+        label: template.label,
+        description: template.description || "",
+        action: "template",
+        template
+      })
+    );
 
-    /** @type {GeneratorPickItem[]} */
-    const items = [
+    const items: GeneratorPickItem[] = [
       ...templateItems,
       ...templateGeneratorItems,
       {
@@ -211,17 +212,17 @@ function registerCommands(context) {
   });
 
   const toggleWrapId = "perchance-for-vscode.toggleWrap";
-  const toggleWrap = vscode.commands.registerCommand(toggleWrapId, async function () {
+  const toggleWrap = vscode.commands.registerCommand(toggleWrapId, async () => {
     await vscode.commands.executeCommand("editor.action.toggleWordWrap");
   });
 
   const foldAllListsId = "perchance-for-vscode.foldAllLists";
-  const foldAllLists = vscode.commands.registerCommand(foldAllListsId, async function () {
+  const foldAllLists = vscode.commands.registerCommand(foldAllListsId, async () => {
     await vscode.commands.executeCommand("editor.foldAll");
   });
 
   const unfoldAllListsId = "perchance-for-vscode.unfoldAllLists";
-  const unfoldAllLists = vscode.commands.registerCommand(unfoldAllListsId, async function () {
+  const unfoldAllLists = vscode.commands.registerCommand(unfoldAllListsId, async () => {
     await vscode.commands.executeCommand("editor.unfoldAll");
   });
 
@@ -234,13 +235,8 @@ function registerCommands(context) {
   );
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function registerFormatter(context) {
-  /** @type {vscode.DocumentFormattingEditProvider} */
-  const provider = {
-    /** @param {vscode.TextDocument} document */
+function registerFormatter(context: vscode.ExtensionContext): void {
+  const provider: vscode.DocumentFormattingEditProvider = {
     provideDocumentFormattingEdits(document) {
       if (document.languageId !== "perchance") {
         return [];
@@ -262,13 +258,11 @@ function registerFormatter(context) {
   );
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- * @param {vscode.DiagnosticCollection} diagnostics
- */
-function registerDiagnostics(context, diagnostics) {
-  /** @param {vscode.TextDocument} document */
-  const update = (document) => {
+function registerDiagnostics(
+  context: vscode.ExtensionContext,
+  diagnostics: vscode.DiagnosticCollection
+): void {
+  const update = (document: vscode.TextDocument) => {
     if (document.languageId !== "perchance") {
       return;
     }
@@ -282,23 +276,14 @@ function registerDiagnostics(context, diagnostics) {
   );
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function registerCodeActions(context) {
-  /** @type {vscode.CodeActionProvider} */
-  const provider = {
-    /**
-     * @param {vscode.TextDocument} document
-     * @param {vscode.Range} _range
-     * @param {vscode.CodeActionContext} contextInfo
-     */
+function registerCodeActions(context: vscode.ExtensionContext): void {
+  const provider: vscode.CodeActionProvider = {
     provideCodeActions(document, _range, contextInfo) {
       if (document.languageId !== "perchance") {
         return [];
       }
 
-      const actions = [];
+      const actions: vscode.CodeAction[] = [];
       for (const diagnostic of contextInfo.diagnostics) {
         if (diagnostic.code === "perchance.ifElseSingleEquals") {
           const fix = createIfElseEqualsFix(document, diagnostic);
@@ -333,13 +318,8 @@ function registerCodeActions(context) {
   );
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function registerFoldingProvider(context) {
-  /** @type {vscode.FoldingRangeProvider} */
-  const provider = {
-    /** @param {vscode.TextDocument} document */
+function registerFoldingProvider(context: vscode.ExtensionContext): void {
+  const provider: vscode.FoldingRangeProvider = {
     provideFoldingRanges(document) {
       if (document.languageId !== "perchance") {
         return [];
@@ -347,7 +327,7 @@ function registerFoldingProvider(context) {
 
       const lines = document.getText().split(/\r?\n/);
       const htmlStart = findHtmlStart(lines);
-      const listStarts = [];
+      const listStarts: number[] = [];
 
       for (let index = 0; index < htmlStart; index += 1) {
         const line = lines[index];
@@ -361,7 +341,7 @@ function registerFoldingProvider(context) {
         }
       }
 
-      const ranges = [];
+      const ranges: vscode.FoldingRange[] = [];
       for (let i = 0; i < listStarts.length; i += 1) {
         const start = listStarts[i];
         const nextStart = i + 1 < listStarts.length ? listStarts[i + 1] : htmlStart;
@@ -378,8 +358,7 @@ function registerFoldingProvider(context) {
   context.subscriptions.push(vscode.languages.registerFoldingRangeProvider("perchance", provider));
 }
 
-/** @param {vscode.TextDocument} document */
-function formatDocument(document) {
+function formatDocument(document: vscode.TextDocument): string {
   const eol = document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
   const lines = document.getText().split(/\r?\n/);
   let inHtmlSection = false;
@@ -407,8 +386,7 @@ function formatDocument(document) {
   return formatted.join(eol);
 }
 
-/** @param {string} line */
-function formatIndentation(line) {
+function formatIndentation(line: string): string {
   const trimmed = line.replace(/[\t ]+$/, "");
   const indentMatch = trimmed.match(/^[\t ]+/);
   if (!indentMatch) {
@@ -422,8 +400,7 @@ function formatIndentation(line) {
   return normalizedIndent + content.trimStart();
 }
 
-/** @param {string} indent */
-function countIndentLevel(indent) {
+function countIndentLevel(indent: string): number {
   let level = 0;
   let spaces = 0;
   for (const char of indent) {
@@ -440,20 +417,19 @@ function countIndentLevel(indent) {
   return level;
 }
 
-/** @param {vscode.TextDocument} document */
-function analyzeDocument(document) {
-  const diagnostics = [];
+function analyzeDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
+  const diagnostics: vscode.Diagnostic[] = [];
   const lines = document.getText().split(/\r?\n/);
   const htmlStart = findHtmlStart(lines);
-  const listNameIndex = new Map();
-  const listNames = [];
-  const htmlIds = new Set();
-  let functionIndentLevel = null;
+  const listNameIndex = new Map<string, number>();
+  const listNames: { name: string; line: number }[] = [];
+  const htmlIds = new Set<string>();
+  let functionIndentLevel: number | null = null;
 
   for (let index = htmlStart; index < lines.length; index += 1) {
     const line = lines[index];
-    let match = null;
     const idPattern = /id\s*=\s*["']([^"']+)["']/g;
+    let match: RegExpExecArray | null = null;
     while ((match = idPattern.exec(line)) !== null) {
       htmlIds.add(match[1]);
     }
@@ -575,18 +551,20 @@ function analyzeDocument(document) {
   return diagnostics;
 }
 
-/**
- * @param {number} line
- * @param {number} start
- * @param {number} end
- * @param {string} message
- * @param {string} [code]
- * @param {DiagnosticData} [data]
- */
-function createDiagnostic(line, start, end, message, code, data) {
+function createDiagnostic(
+  line: number,
+  start: number,
+  end: number,
+  message: string,
+  code?: string,
+  data?: DiagnosticData
+): vscode.Diagnostic {
   const range = new vscode.Range(line, start, line, Math.max(start + 1, end));
-  /** @type {vscode.Diagnostic & { data?: DiagnosticData }} */
-  const diagnostic = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Warning);
+  const diagnostic = new vscode.Diagnostic(
+    range,
+    message,
+    vscode.DiagnosticSeverity.Warning
+  ) as vscode.Diagnostic & { data?: DiagnosticData };
   if (code) {
     diagnostic.code = code;
   }
@@ -596,8 +574,7 @@ function createDiagnostic(line, start, end, message, code, data) {
   return diagnostic;
 }
 
-/** @param {string} text */
-function stripComment(text) {
+function stripComment(text: string): string {
   const index = text.indexOf("//");
   if (index === -1) {
     return text;
@@ -605,8 +582,7 @@ function stripComment(text) {
   return text.slice(0, index);
 }
 
-/** @param {string} line */
-function looksLikeHtmlStart(line) {
+function looksLikeHtmlStart(line: string): boolean {
   const trimmed = line.trimStart();
   if (!trimmed.startsWith("<")) {
     return false;
@@ -617,8 +593,7 @@ function looksLikeHtmlStart(line) {
   return /<\/?[a-zA-Z]/.test(trimmed);
 }
 
-/** @param {string[]} lines */
-function findHtmlStart(lines) {
+function findHtmlStart(lines: string[]): number {
   let sawBlank = false;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
@@ -635,8 +610,7 @@ function findHtmlStart(lines) {
   return lines.length;
 }
 
-/** @param {string} trimmedLine */
-function parseListName(trimmedLine) {
+function parseListName(trimmedLine: string): string | null {
   let line = trimmedLine;
   if (line.startsWith("async ")) {
     line = line.slice("async ".length).trimStart();
@@ -648,19 +622,17 @@ function parseListName(trimmedLine) {
   return match[0];
 }
 
-/** @param {string} trimmedLine */
-function isFunctionListStart(trimmedLine) {
+function isFunctionListStart(trimmedLine: string): boolean {
   if (!trimmedLine) {
     return false;
   }
   return /\b=>\s*$/.test(trimmedLine);
 }
 
-/** @param {string} text */
-function findDynamicOddsWithSingleEquals(text) {
-  const warnings = [];
+function findDynamicOddsWithSingleEquals(text: string): { start: number; end: number }[] {
+  const warnings: { start: number; end: number }[] = [];
   const pattern = /\^\s*\[([^\]]*)\]/g;
-  let match = null;
+  let match: RegExpExecArray | null = null;
   while ((match = pattern.exec(text)) !== null) {
     const content = match[1];
     if (hasSingleEquals(content)) {
@@ -673,11 +645,10 @@ function findDynamicOddsWithSingleEquals(text) {
   return warnings;
 }
 
-/** @param {string} text */
-function findIfElseSingleEquals(text) {
-  const warnings = [];
+function findIfElseSingleEquals(text: string): { start: number; end: number }[] {
+  const warnings: { start: number; end: number }[] = [];
   const pattern = /\[([^\]]+)\]/g;
-  let match = null;
+  let match: RegExpExecArray | null = null;
   while ((match = pattern.exec(text)) !== null) {
     const content = match[1];
     const questionIndex = content.indexOf("?");
@@ -696,8 +667,7 @@ function findIfElseSingleEquals(text) {
   return warnings;
 }
 
-/** @param {string} text */
-function hasSingleEquals(text) {
+function hasSingleEquals(text: string): boolean {
   for (let i = 0; i < text.length; i += 1) {
     if (text[i] !== "=") {
       continue;
@@ -718,11 +688,10 @@ function hasSingleEquals(text) {
   return false;
 }
 
-/**
- * @param {vscode.TextDocument} document
- * @param {vscode.Diagnostic & { data?: DiagnosticData }} diagnostic
- */
-function createIfElseEqualsFix(document, diagnostic) {
+function createIfElseEqualsFix(
+  document: vscode.TextDocument,
+  diagnostic: vscode.Diagnostic & { data?: DiagnosticData }
+): vscode.CodeAction | null {
   const line = diagnostic.data?.line ?? diagnostic.range.start.line;
   const lineText = document.lineAt(line).text;
   const updated = replaceSingleEqualsInIfElse(lineText);
@@ -742,8 +711,7 @@ function createIfElseEqualsFix(document, diagnostic) {
   return fix;
 }
 
-/** @param {string} lineText */
-function replaceSingleEqualsInIfElse(lineText) {
+function replaceSingleEqualsInIfElse(lineText: string): string | null {
   const match = lineText.match(/\[([^\]]+\?[^\]]+:[^\]]+)\]/);
   if (!match) {
     return null;
@@ -762,11 +730,7 @@ function replaceSingleEqualsInIfElse(lineText) {
   return lineText.replace(match[0], `[${fixedBlock}]`);
 }
 
-/**
- * @param {string} text
- * @param {string} replacement
- */
-function replaceFirstSingleEquals(text, replacement) {
+function replaceFirstSingleEquals(text: string, replacement: string): string | null {
   for (let i = 0; i < text.length; i += 1) {
     if (text[i] !== "=") {
       continue;
@@ -787,12 +751,11 @@ function replaceFirstSingleEquals(text, replacement) {
   return null;
 }
 
-/**
- * @param {vscode.TextDocument} document
- * @param {vscode.Diagnostic & { data?: DiagnosticData }} diagnostic
- * @param {string} suffix
- */
-function createRenameListFix(document, diagnostic, suffix) {
+function createRenameListFix(
+  document: vscode.TextDocument,
+  diagnostic: vscode.Diagnostic & { data?: DiagnosticData },
+  suffix: string
+): vscode.CodeAction | null {
   const name = diagnostic.data?.name;
   if (!name) {
     return null;
@@ -815,38 +778,31 @@ function createRenameListFix(document, diagnostic, suffix) {
   return fix;
 }
 
-/** @param {vscode.ExtensionContext} context */
-function loadPlugins(context) {
+function loadPlugins(context: vscode.ExtensionContext): PluginRecord[] {
   const data = loadJsonFile(context, PLUGINS_FILE);
   if (!data || !Array.isArray(data.plugins)) {
     return [];
   }
-  return data.plugins;
+  return data.plugins as PluginRecord[];
 }
 
-/** @param {vscode.ExtensionContext} context */
-function loadTemplates(context) {
+function loadTemplates(context: vscode.ExtensionContext): TemplateRecord[] {
   const data = loadJsonFile(context, TEMPLATES_FILE);
   if (!data || !Array.isArray(data.templates)) {
     return [];
   }
-  return data.templates;
+  return data.templates as TemplateRecord[];
 }
 
-/** @param {vscode.ExtensionContext} context */
-function loadTemplateGenerators(context) {
+function loadTemplateGenerators(context: vscode.ExtensionContext): TemplateGeneratorRecord[] {
   const data = loadJsonFile(context, TEMPLATE_GENERATORS_FILE);
   if (!data || !Array.isArray(data.templates_generators)) {
     return [];
   }
-  return data.templates_generators;
+  return data.templates_generators as TemplateGeneratorRecord[];
 }
 
-/**
- * @param {vscode.ExtensionContext} context
- * @param {string} relativePath
- */
-function loadJsonFile(context, relativePath) {
+function loadJsonFile(context: vscode.ExtensionContext, relativePath: string): unknown {
   const filePath = path.join(context.extensionPath, relativePath);
   try {
     const raw = fs.readFileSync(filePath, "utf8");
@@ -857,11 +813,10 @@ function loadJsonFile(context, relativePath) {
   }
 }
 
-/**
- * @param {string} generatorName
- * @param {"lists" | "full"} mode
- */
-async function downloadGeneratorByName(generatorName, mode) {
+async function downloadGeneratorByName(
+  generatorName: string,
+  mode: "lists" | "full"
+): Promise<string> {
   const url =
     mode === "lists"
       ? `https://perchance.org/api/downloadGenerator?generatorName=${encodeURIComponent(
@@ -890,7 +845,7 @@ async function downloadGeneratorByName(generatorName, mode) {
   );
 }
 
-async function createFromExistingGenerator() {
+async function createFromExistingGenerator(): Promise<void> {
   const generatorName = await vscode.window.showInputBox({
     title: "Perchance generator name",
     prompt: "Enter the generator name from perchance.org/<name>",
@@ -900,17 +855,16 @@ async function createFromExistingGenerator() {
     return;
   }
 
-  /** @type {{ label: string; description: string; value: "lists" | "full" }[]} */
   const modeChoices = [
     {
       label: "Lists only",
       description: "Download just the lists code",
-      value: "lists"
+      value: "lists" as const
     },
     {
       label: "Full generator",
       description: "Download lists and HTML",
-      value: "full"
+      value: "full" as const
     }
   ];
 
@@ -934,8 +888,7 @@ async function createFromExistingGenerator() {
   await openGeneratorDocument(content);
 }
 
-/** @param {TemplateGeneratorRecord} template */
-async function openTemplateGenerator(template) {
+async function openTemplateGenerator(template: TemplateGeneratorRecord): Promise<void> {
   const generatorName = extractGeneratorName(template.url);
   const openUrl = template.edit_url || template.url;
   if (!generatorName) {
@@ -973,8 +926,7 @@ async function openTemplateGenerator(template) {
   await openGeneratorDocument(content);
 }
 
-/** @param {string} url */
-function extractGeneratorName(url) {
+function extractGeneratorName(url: string): string | null {
   if (!url) {
     return null;
   }
@@ -990,19 +942,10 @@ function extractGeneratorName(url) {
   }
 }
 
-/** @param {string} content */
-async function openGeneratorDocument(content) {
+async function openGeneratorDocument(content: string): Promise<void> {
   const document = await vscode.workspace.openTextDocument({
     language: "perchance",
     content
   });
   await vscode.window.showTextDocument(document, { preview: false });
 }
-
-// This method is called when your extension is deactivated
-function deactivate() {}
-
-module.exports = {
-  activate,
-  deactivate
-};

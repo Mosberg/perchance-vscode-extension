@@ -1,0 +1,101 @@
+{
+  "name": "perchance-vscode",
+  "displayName": "Perchance Language Support",
+  "description": "Perchance.org language support with LSP",
+  "version": "0.1.0",
+  "publisher": "Mosberg",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:perchance",
+    "onCommand:perchance-for-vscode.managePlugins",
+    "onCommand:perchance-for-vscode.createGenerator",
+    "onCommand:perchance-for-vscode.toggleWrap",
+    "onCommand:perchance-for-vscode.foldAllLists",
+    "onCommand:perchance-for-vscode.unfoldAllLists"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "perchance-for-vscode.managePlugins",
+        "title": "Perchance: Manage Plugins"
+      },
+      {
+        "command": "perchance-for-vscode.createGenerator",
+        "title": "Perchance: Create Generator"
+      },
+      {
+        "command": "perchance-for-vscode.toggleWrap",
+        "title": "Perchance: Toggle Wrap"
+      },
+      {
+        "command": "perchance-for-vscode.foldAllLists",
+        "title": "Perchance: Fold All Lists"
+      },
+      {
+        "command": "perchance-for-vscode.unfoldAllLists",
+        "title": "Perchance: Unfold All Lists"
+      }
+    ],
+    "languages": [
+      {
+        "id": "perchance",
+        "aliases": [
+          "Perchance",
+          "perchance"
+        ],
+        "extensions": [
+          ".perchance",
+          ".prch"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "perchance",
+        "scopeName": "source.perchance",
+        "path": "./syntaxes/perchance.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "perchance",
+        "path": "./snippets/perchance.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[perchance]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.wordWrap": "off",
+        "editor.matchBrackets": "always"
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.x",
+    "@types/vscode": "^1.109.0",
+    "@eslint/js": "^9.39.0",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -p ./ -w",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:full": "eslint \"src/**/*.ts\"",
+    "test": "node -e \"console.log('No tests configured')\""
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "selectOne": { "args": 0, "desc": "Pick one random item", "on": "list" },
+  "selectMany": { "args": 1, "desc": "Pick N random items", "on": "list" },
+  "joinItems": { "args": 1, "desc": "Join with separator", "on": "list" },
+  "pastTense": { "args": 0, "desc": "Convert to past tense", "on": "text" }
+}

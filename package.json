@@ -1,93 +1,18 @@
 {
-  "name": "perchance-for-vscode",
-  "displayName": "Perchance for VSCode",
-  "description": "Perchance for VSCode (Lists, Tester, HTML, Preview)",
-  "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Mosberg/perchance-vscode-extension"
-  },
-  "engines": {
-    "vscode": "^1.109.0"
-  },
-  "categories": [
-    "Other"
+  "name": "perchance-vscode-extension",
+  "publisher": "Mosberg",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
   ],
-  "activationEvents": [
-    "onLanguage:perchance",
-    "onCommand:perchance-for-vscode.managePlugins",
-    "onCommand:perchance-for-vscode.createGenerator",
-    "onCommand:perchance-for-vscode.toggleWrap",
-    "onCommand:perchance-for-vscode.foldAllLists",
-    "onCommand:perchance-for-vscode.unfoldAllLists"
-  ],
-  "main": "./extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "perchance-for-vscode.managePlugins",
-        "title": "Perchance: Manage Plugins"
-      },
-      {
-        "command": "perchance-for-vscode.createGenerator",
-        "title": "Perchance: Create Generator"
-      },
-      {
-        "command": "perchance-for-vscode.toggleWrap",
-        "title": "Perchance: Toggle Wrap"
-      },
-      {
-        "command": "perchance-for-vscode.foldAllLists",
-        "title": "Perchance: Fold All Lists"
-      },
-      {
-        "command": "perchance-for-vscode.unfoldAllLists",
-        "title": "Perchance: Unfold All Lists"
-      }
-    ],
-    "languages": [
-      {
-        "id": "perchance",
-        "aliases": [
-          "Perchance",
-          "perchance"
-        ],
-        "extensions": [
-          ".perchance",
-          ".prch"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "snippets": [
-      {
-        "language": "perchance",
-        "path": "./snippets/perchance.json"
-      }
-    ],
-    "configurationDefaults": {
-      "[perchance]": {
-        "editor.tabSize": 2,
-        "editor.insertSpaces": true,
-        "editor.wordWrap": "off",
-        "editor.matchBrackets": "always"
-      }
-    }
-  },
   "scripts": {
-    "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js \"extension.js\" \"test/**/*.js\"",
-    "lint:full": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js \"**/*.js\"",
+    "build": "npm run compile -w client && npm run compile -w server",
+    "watch": "npm run watch -w client && npm run watch -w server",
+    "lint": "npm run lint -w client && npm run lint -w server",
+    "lint:full": "npm run lint:full -w client && npm run lint:full -w server",
     "data:check": "node scripts/validate-data.js",
     "data:sort": "node scripts/sort-data.js",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.109.0",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.39.2"
+    "test": "npm test -w client"
   }
 }

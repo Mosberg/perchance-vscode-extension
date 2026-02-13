@@ -56,20 +56,23 @@ perchance-vscode-extension/
 **server/src/parser.ts** (Skeleton - indentation-based hierarchical lists)
 
 ```typescript
+import type { Position } from "vscode-languageserver-types";
+
 export interface AstNode {
-  type: 'Block' | 'ListItem' | 'InlineExpr' | 'Text';
+  type: "Block" | "ListItem" | "InlineExpr" | "Text";
   range: { start: Position; end: Position };
-  name?: string;  // Block name like "noun"
+  name?: string; // Block name like "noun"
+  text?: string;
   children?: AstNode[];
   weight?: number;
-  expr?: { method: string; args: string[] };
+  expr?: { method?: string; args: string[] };
 }
 
 export function parse(content: string): AstNode[] {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const root: AstNode[] = [];
-  let stack: AstNode[] = [root];
-  let indentStack: number[] = [0];
+  const stack: AstNode[][] = [root];
+  const indentStack: number[] = [0];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trimStart();
@@ -82,17 +85,22 @@ export function parse(content: string): AstNode[] {
       indentStack.pop();
     }
 
-    if (text.includes('=')) {
+    if (text.endsWith("=")) {
       // Block def: "noun =\n  dog\n  cat"
-      const [, name] = text.split(/\s*=\s*/);
-      const block: AstNode = { type: 'Block', name: name.trim(), children: [], range: pos(i, 0, i + 1, 0) };
+      const name = text.split(/\s*=\s*/)[0];
+      const block: AstNode = {
+        type: "Block",
+        name: name.trim(),
+        children: [],
+        range: pos(i, 0, i + 1, 0)
+      };
       stack[stack.length - 1].push(block);
       stack.push(block.children!);
       indentStack.push(indent);
-    } else if (text.startsWith('[') && text.endsWith(']')) {
+    } else if (text.startsWith("[") && text.endsWith("]")) {
       // Inline expr: "[noun.selectOne]"
       stack[stack.length - 1].push({
-        type: 'InlineExpr',
+        type: "InlineExpr",
         expr: parseInlineExpr(text),
         range: pos(i, 0, i + 1, 0)
       });
@@ -100,9 +108,9 @@ export function parse(content: string): AstNode[] {
       // List item with optional weight: "dog^2"
       const match = text.match(/^(.*?)(\^(\d+))?$/);
       stack[stack.length - 1].push({
-        type: 'ListItem',
-        text: match! [github](https://github.com/ouoertheo/sd-webui-perchance),
-        weight: match! [code.visualstudio](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) ? +match! [code.visualstudio](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) : 1,
+        type: "ListItem",
+        text: match ? match[1].trim() : text,
+        weight: match && match[3] ? Number(match[3]) : 1,
         range: pos(i, 0, i + 1, 0)
       });
     }

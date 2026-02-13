@@ -1,0 +1,25 @@
+{
+  "name": "perchance-language-server",
+  "version": "0.1.0",
+  "publisher": "Mosberg",
+  "private": true,
+  "dependencies": {
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-languageserver-types": "^3.17.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "watch": "tsc -b -w",
+    "compile": "tsc -b",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:full": "eslint \"src/**/*.ts\""
+  }
+}
