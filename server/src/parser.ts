@@ -78,6 +78,11 @@ function parseInlineExpr(expr: string): { method?: string; args: string[] } {
   };
 }
 
-function pos(line: number, charStart: number, lineEnd: number, charEnd: number): any {
+function pos(
+  line: number,
+  charStart: number,
+  lineEnd: number,
+  charEnd: number
+): { start: Position; end: Position } {
   return { start: { line, character: charStart }, end: { line: lineEnd, character: charEnd } };
 }

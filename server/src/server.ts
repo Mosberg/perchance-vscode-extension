@@ -41,7 +41,7 @@ connection.onCompletion(() => {
 });
 
 connection.onHover(() => {
-  return { contents: [{ value: "Perchance block or method" }] };
+  return { contents: "Perchance block or method" };
 });
 
 documents.listen(connection);

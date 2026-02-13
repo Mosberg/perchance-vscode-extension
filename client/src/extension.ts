@@ -98,7 +98,12 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   client = new LanguageClient("perchance", "Perchance LSP", serverOptions, clientOptions);
-  context.subscriptions.push(client.start());
+  client.start();
+  context.subscriptions.push({
+    dispose: () => {
+      void client?.stop();
+    }
+  });
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -779,34 +784,37 @@ function createRenameListFix(
 }
 
 function loadPlugins(context: vscode.ExtensionContext): PluginRecord[] {
-  const data = loadJsonFile(context, PLUGINS_FILE);
+  const data = loadJsonFile<{ plugins: PluginRecord[] }>(context, PLUGINS_FILE);
   if (!data || !Array.isArray(data.plugins)) {
     return [];
   }
-  return data.plugins as PluginRecord[];
+  return data.plugins;
 }
 
 function loadTemplates(context: vscode.ExtensionContext): TemplateRecord[] {
-  const data = loadJsonFile(context, TEMPLATES_FILE);
+  const data = loadJsonFile<{ templates: TemplateRecord[] }>(context, TEMPLATES_FILE);
   if (!data || !Array.isArray(data.templates)) {
     return [];
   }
-  return data.templates as TemplateRecord[];
+  return data.templates;
 }
 
 function loadTemplateGenerators(context: vscode.ExtensionContext): TemplateGeneratorRecord[] {
-  const data = loadJsonFile(context, TEMPLATE_GENERATORS_FILE);
+  const data = loadJsonFile<{ templates_generators: TemplateGeneratorRecord[] }>(
+    context,
+    TEMPLATE_GENERATORS_FILE
+  );
   if (!data || !Array.isArray(data.templates_generators)) {
     return [];
   }
-  return data.templates_generators as TemplateGeneratorRecord[];
+  return data.templates_generators;
 }
 
-function loadJsonFile(context: vscode.ExtensionContext, relativePath: string): unknown {
+function loadJsonFile<T>(context: vscode.ExtensionContext, relativePath: string): T | null {
   const filePath = path.join(context.extensionPath, relativePath);
   try {
     const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw);
+    return JSON.parse(raw) as T;
   } catch (error) {
     console.error(`Failed to load ${relativePath}:`, error);
     return null;
