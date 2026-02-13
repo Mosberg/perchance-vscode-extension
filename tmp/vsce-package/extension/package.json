@@ -14,7 +14,14 @@
   "categories": [
     "Programming Languages"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:perchance",
+    "onCommand:perchance-for-vscode.managePlugins",
+    "onCommand:perchance-for-vscode.createGenerator",
+    "onCommand:perchance-for-vscode.toggleWrap",
+    "onCommand:perchance-for-vscode.foldAllLists",
+    "onCommand:perchance-for-vscode.unfoldAllLists"
+  ],
   "main": "./out/extension.js",
   "files": [
     "out/**",
