@@ -576,7 +576,7 @@ function analyzeDocument(document) {
           index,
           indent.length,
           indent.length + commentFree.length,
-          "Use \\= for literal equals signs in list items.",
+          "Use = for literal equals signs in list items.",
           "perchance.unescapedEquals",
           { line: index }
         )
