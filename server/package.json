@@ -1,7 +1,19 @@
 {
   "name": "perchance-language-server",
+  "displayName": "Perchance Language Server",
+  "description": "Language Server for Perchance.org generators",
   "version": "0.1.0",
   "publisher": "Mosberg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mosberg/perchance-vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
   "private": true,
   "dependencies": {
     "vscode-languageserver": "^9.0.1",

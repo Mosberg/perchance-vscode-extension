@@ -1,13 +1,19 @@
 {
   "name": "perchance-vscode-extension",
+  "displayName": "Perchance for VSCode",
+  "description": "VSCode extension for Perchance.org generators",
   "version": "0.1.0",
   "publisher": "Mosberg",
   "repository": {
+    "type": "git",
     "url": "https://github.com/Mosberg/perchance-vscode-extension"
   },
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.109.0"
   },
+  "categories": [
+    "Programming Languages"
+  ],
   "private": true,
   "workspaces": [
     "client",
