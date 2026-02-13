@@ -14,6 +14,18 @@
   "categories": [
     "Programming Languages"
   ],
+  "files": [
+    "out/**",
+    "server/**",
+    "data/**",
+    "snippets/**",
+    "syntaxes/**",
+    "language-configuration.json",
+    "README.md",
+    "LICENSE.txt",
+    "package.json",
+    "node_modules/**"
+  ],
   "private": true,
   "workspaces": [
     "client",

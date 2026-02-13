@@ -32,7 +32,8 @@
     "language-configuration.json",
     "README.md",
     "LICENSE.txt",
-    "package.json"
+    "package.json",
+    "node_modules/**"
   ],
   "contributes": {
     "commands": [
