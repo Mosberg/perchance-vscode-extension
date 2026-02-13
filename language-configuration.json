@@ -21,5 +21,24 @@
     { "open": "(", "close": ")" },
     { "open": "\"", "close": "\"" },
     { "open": "'", "close": "'" }
-  ]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^.*(\\{[^}\"']*|\\([^\"']*|\\[[^\"']*)$",
+    "decreaseIndentPattern": "^\\s*[\\}\\]\\)].*$",
+    "indentNextLinePattern": "^.*(\\bcase\\b[^:]*|\\bdefault\\b[^:]*):[^;]*$",
+    "unIndentedLinePattern": "^\\s*(\\bcase\\b[^:]*|\\bdefault\\b[^:]*):[^;]*$"
+  },
+  "folding": {
+    "markers": {
+      "start": "^\\s*//\\s*#?region\\b",
+      "end": "^\\s*//\\s*#?endregion\\b"
+    }
+  },
+  "autoCloseBefore": ";:.,=}])> \n\t",
+  "colorizedBracketPairs": [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"]
+  ],
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^`~!@#$%^&*()=+[{]}\\\\|;:'\",.<>/?\\s]+)"
 }

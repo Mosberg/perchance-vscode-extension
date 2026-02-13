@@ -132,7 +132,8 @@ function registerCommands(context) {
     }
 
     const snippet = pick.plugin.snippet || pick.plugin.url || pick.label;
-    if (!snippet) {
+    const snippetText = snippet ? snippet.trim() : "";
+    if (!snippetText) {
       vscode.window.showWarningMessage("Selected plugin has no snippet or url.");
       return;
     }
@@ -140,10 +141,10 @@ function registerCommands(context) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       await editor.edit((editBuilder) => {
-        editBuilder.insert(editor.selection.active, snippet);
+        editBuilder.insert(editor.selection.active, snippetText);
       });
     } else {
-      await vscode.env.clipboard.writeText(snippet);
+      await vscode.env.clipboard.writeText(snippetText);
       vscode.window.showInformationMessage("No active editor. Plugin text copied to clipboard.");
     }
 
@@ -656,11 +657,6 @@ function isFunctionListStart(trimmedLine) {
 }
 
 /** @param {string} text */
-function isPropertyAssignment(text) {
-  return /^[a-zA-Z0-9_$][\w$]*\s*=/.test(text.trimStart());
-}
-
-/** @param {string} text */
 function findDynamicOddsWithSingleEquals(text) {
   const warnings = [];
   const pattern = /\^\s*\[([^\]]*)\]/g;
@@ -875,6 +871,10 @@ async function downloadGeneratorByName(generatorName, mode) {
           generatorName
         )}`;
 
+  if (typeof fetch !== "function") {
+    throw new Error("Fetch API is unavailable in this extension host.");
+  }
+
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -921,7 +921,15 @@ async function createFromExistingGenerator() {
     return;
   }
 
-  const content = await downloadGeneratorByName(generatorName.trim(), mode.value);
+  let content = "";
+  try {
+    content = await downloadGeneratorByName(generatorName.trim(), mode.value);
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Failed to download generator: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return;
+  }
 
   await openGeneratorDocument(content);
 }
@@ -953,7 +961,15 @@ async function openTemplateGenerator(template) {
     return;
   }
 
-  const content = await downloadGeneratorByName(generatorName, "full");
+  let content = "";
+  try {
+    content = await downloadGeneratorByName(generatorName, "full");
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Failed to download template: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return;
+  }
   await openGeneratorDocument(content);
 }
 

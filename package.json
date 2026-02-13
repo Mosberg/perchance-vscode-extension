@@ -4,6 +4,7 @@
   "description": "Perchance for VSCode (Lists, Tester, HTML, Preview)",
   "version": "0.0.1",
   "repository": {
+    "type": "git",
     "url": "https://github.com/Mosberg/perchance-vscode-extension"
   },
   "engines": {
@@ -12,7 +13,14 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:perchance",
+    "onCommand:perchance-for-vscode.managePlugins",
+    "onCommand:perchance-for-vscode.createGenerator",
+    "onCommand:perchance-for-vscode.toggleWrap",
+    "onCommand:perchance-for-vscode.foldAllLists",
+    "onCommand:perchance-for-vscode.unfoldAllLists"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -67,7 +75,10 @@
     }
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js \"extension.js\" \"test/**/*.js\"",
+    "lint:full": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js \"**/*.js\"",
+    "data:check": "node scripts/validate-data.js",
+    "data:sort": "node scripts/sort-data.js",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },

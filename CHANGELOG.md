@@ -6,4 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-- Initial release
+- Improve activation events and lint scope.
+- Add data integrity tests.
+- Add data validation and sorting scripts.
+- Fix plugin/template metadata typos.

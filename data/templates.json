@@ -1,16 +1,16 @@
 {
   "templates": [
     {
-      "id": "blank",
-      "label": "Blank Generator",
-      "description": "Lists only with an output list",
-      "content": "$output\n  Hello from Perchance!\n"
-    },
-    {
       "id": "basic",
       "label": "Basic Generator",
       "description": "Simple HTML with a button",
       "content": "$output\n  The [adjective] [animal].\n\nadjective\n  sneaky\n  happy\n  curious\n\nanimal\n  fox\n  cat\n  owl\n\n<main>\n  <h1>Basic Generator</h1>\n  <p class=\"output\">[output]</p>\n  <button onclick=\"update();\">Generate</button>\n</main>\n\n<style>\n  body { font-family: sans-serif; margin: 2rem; }\n  .output { font-size: 1.25rem; margin: 1rem 0; }\n</style>\n"
+    },
+    {
+      "id": "blank",
+      "label": "Blank Generator",
+      "description": "Lists only with an output list",
+      "content": "$output\n  Hello from Perchance!\n"
     },
     {
       "id": "centered-minimal",
